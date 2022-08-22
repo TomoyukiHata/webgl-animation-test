@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="https://unpkg.com/three@0.137.4/build/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.137.4/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/gsap/latest/TweenMax.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+</head>
+  <body>
+    <div id="webgl"></div>
+
+    <!-- vertexShader -->
+    <script id="js-vertex-shader" type="x-shader/x-vertex">
+    attribute vec3 position;
+    attribute vec3 color;
+    attribute float alpha;
+    attribute vec2 rand;
+    uniform mat4 modelViewMatrix;
+    uniform mat4 projectionMatrix;
+    uniform float u_ratio;
+    uniform float u_time;
+    varying vec3 v_color;
+    varying float v_alpla;
+    uniform float move_param;
+
+
+    vec3 pos;
+    vec3 stable;
+    uniform float move;
+    uniform float time;
+    uniform vec2 mouse;
+
+    attribute float aSpeed;
+    attribute float aOffset;
+    attribute float aPress;
+
+    uniform float mousePressed;
+
+    void main() {
+      v_color = color;
+      
+      v_alpla = alpha;
+
+      stable = position;
+      float dist = distance(stable.xy, mouse);
+      float area = 1.0 - smoothstep(0.0, 50.0, dist);
+
+      stable.x += 1.0 * (0.1 * 200.0 * aPress) * area * mousePressed * mouse.x * 0.01;
+      stable.y += 5.0 * (0.1 * 200.0 * aPress) * area * mousePressed * mouse.y * 0.01;
+      stable.z += 2.0 * (0.1 * 200.0 * aPress) * area * mousePressed;
+
+      float moveRange = 1.0;
+      float moveRandX = moveRange * sin(u_time + rand.x * rand.y * 50.0);
+      float moveRandY = moveRange * cos(u_time + rand.x * rand.y * 50.0);
+
+      vec4 vertexDirection = vec4(normalize(position.xyz), 0.0);
+      float power = 1.0;
+      vec4 diffuse = -vertexDirection * power * u_ratio * rand.x;
+
+      vec4 mvPosition = modelViewMatrix * vec4(stable, 1.0) + vec4(moveRandX, moveRandY, 1, 0) + diffuse;
+
+      gl_Position = projectionMatrix * mvPosition;
+      gl_PointSize = 6.5;
+    }
+    </script>
+    
+    <!-- fragmentShader -->
+    <script id="js-fragment-shader" type="x-shader/x-fragment">
+    precision mediump float;
+    
+    varying vec3 v_color;
+    varying float v_alpla;
+    
+    void main() {
+        vec2 temp = gl_PointCoord - vec2(0.5);
+        float f = dot(temp, temp);
+        if (f > 0.25 ) {
+            discard;
+        }
+    
+        gl_FragColor = vec4(v_color, v_alpla);
+        
+        
+    }
+    </script>
+
+    <script src="three_animation.js"></script>
+  </body>
+</html>
